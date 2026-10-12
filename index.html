@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tecnologia 3r - Projecte Autòmat | Saber Bordanova</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Google Sans / Roboto style -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sites: {
+              header: '#202124',
+              banner: '#2c3e50',
+              bannerDark: '#1a252f',
+              accent: '#4285f4',
+              accentHover: '#3367d6',
+              bgLight: '#f8f9fa',
+              cardBg: '#ffffff',
+              border: '#dadce0',
+              textPrimary: '#202124',
+              textSecondary: '#5f6368'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            google: ['Google Sans', 'Roboto', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8f9fa;
+      color: #202124;
+      overflow-x: hidden;
+    }
+    .google-sans {
+      font-family: 'Google Sans', 'Roboto', sans-serif;
+    }
+    /* Smooth transitions for interactive tabs */
+    .tab-content {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    .tab-content.active {
+      display: block;
+      opacity: 1;
+    }
+    /* Animation for the automaton wings */
+    @keyframes wingFlapLeft {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-22deg); }
+    }
+    @keyframes wingFlapRight {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(22deg); }
+    }
+    @keyframes crankRotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes camUp =Down {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    .animate-wing-left {
+      transform-origin: 100% 80%;
+      animation: wingFlapLeft 1.2s ease-in-out infinite;
+    }
+    .animate-wing-right {
+      transform-origin: 0% 80%;
+      animation: wingFlapRight 1.2s ease-in-out infinite;
+    }
+    .animate-crank {
+      transform-origin: 260px 320px;
+      animation: crankRotate 1.2s linear infinite;
+    }
+    .animate-cam-push {
+      animation: camUp =Down 1.2s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+  <header class="bg-sites-header text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Site Title & Author (Top Left) -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('main')">
+          <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-sm shadow">
+            SB
+          </div>
+          <span class="font-medium text-lg tracking-wide text-gray-100 hover:text-white transition">
+            Saber Bordanova
+          </span>
+        </div>
+
+        <!-- Desktop Navigation Menu (Top Right) -->
+        <nav class="hidden md:flex space-x-1">
+          <button id="nav-main" onclick="switchTab('main')" class="nav-btn active px-4 py-2 rounded-md text-sm font-medium text-white bg-white/10 transition flex items-center space-x-2">
+            <i class="fa-solid fa-house text-xs"></i>
+            <span>Pàgina principal</span>
+          </button>
+          <button id="nav-colibri" onclick="switchTab('colibri')" class="nav-btn px-4 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition flex items-center space-x-2">
+            <i class="fa-solid fa-crow text-xs"></i>
+            <span>Autòmat: Colibrí mecànic</span>
+          </button>
+          <button id="nav-video" onclick="switchTab('video')" class="nav-btn px-4 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition flex items-center space-x-2">
+            <i class="fa-solid fa-play text-xs"></i>
+            <span>Vídeo tutorial</span>
+          </button>
+        </nav>
+
+        <!-- Mobile Menu Toggle Button -->
+        <div class="md:hidden">
+          <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-800 focus:outline-none">
+            <i class="fa-solid fa-bars text-xl"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-menu" class="hidden md:hidden bg-gray-900 border-t border-gray-800 px-4 pt-2 pb-4 space-y-1">
+      <button onclick="switchTab('main'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-white bg-gray-800 flex items-center space-x-3">
+        <i class="fa-solid fa-house"></i>
+        <span>Pàgina principal</span>
+      </button>
+      <button onclick="switchTab('colibri'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800 flex items-center space-x-3">
+        <i class="fa-solid fa-crow"></i>
+        <span>Autòmat: Colibrí mecànic</span>
+      </button>
+      <button onclick="switchTab('video'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800 flex items-center space-x-3">
+        <i class="fa-solid fa-play"></i>
+        <span>Vídeo tutorial</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="bg-gradient-to-r from-slate-900 via-sites-bannerDark to-slate-900 text-white py-14 px-4 sm:px-6 lg:px-8 border-b-4 border-blue-600 shadow-inner">
+    <div class="max-w-4xl mx-auto text-center space-y-3">
+      <div class="inline-block px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs font-semibold tracking-wider uppercase border border-blue-400/30 mb-2">
+        Projecte Individual de Tecnologia
+      </div>
+      <h1 class="google-sans text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white drop-shadow-sm">
+        TECNOLOGIA 3R
+      </h1>
+      <p class="google-sans text-2xl sm:text-3xl font-semibold text-slate-300 tracking-wide uppercase">
+        PROJECTE AUTÒMAT
+      </p>
+      <div class="w-24 h-1 bg-blue-500 mx-auto rounded-full mt-4"></div>
+      <p class="text-sm text-slate-400 font-light italic pt-2">
+        Autor: <span class="text-slate-200 font-normal">Saber Bordanova</span> | Curs: <span class="text-slate-200 font-normal">3r ESO</span>
+      </p>
+    </div>
+  </section>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow w-full">
+
+    <!-- ================= TAB 1: PÀGINA PRINCIPAL ================= -->
+    <div id="tab-main" class="tab-content active space-y-10">
+
+      <!-- Section 1: Disseny de l'Autòmat -->
+      <section class="bg-white rounded-xl shadow-sm border border-sites-border p-6 sm:p-8 hover:shadow-md transition">
+        <div class="border-b border-gray-100 pb-4 mb-6 flex items-center justify-between">
+          <h2 class="google-sans text-2xl sm:text-3xl font-bold text-sites-textPrimary flex items-center gap-3">
+            <i class="fa-solid fa-gears text-blue-600"></i>
+            <span>Disseny de l'Autòmat: Colibrí Mecànic</span>
+          </h2>
+          <span class="text-xs font-medium px-2.5 py-1 bg-gray-100 text-gray-600 rounded">Disseny 3D & Cartró</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <!-- Left Column: SVG Illustration / Render of Cardboard Hummingbird Automaton -->
+          <div class="lg:col-span-5 flex flex-col items-center justify-center">
+            <div class="relative w-full max-w-sm bg-slate-900 rounded-xl p-4 border border-slate-700 shadow-xl overflow-hidden group">
+              <!-- Animated SVG Rendering of the exact automaton from image -->
+              <svg viewBox="0 0 380 440" class="w-full h-auto drop-shadow-lg">
+                <!-- Background Dark Gradient -->
+                <rect width="380" height="440" fill="#18181c" rx="8" />
+
+                <!-- Table Surface -->
+                <rect x="20" y="380" width="340" height="40" fill="#2d2218" rx="2"/>
+
+                <!-- CARDBOARD BOX BASE -->
+                <g id="box-base">
+                  <!-- Outer Box -->
+                  <rect x="110" y="210" width="160" height="170" fill="#d4a373" stroke="#a37244" stroke-width="3" rx="4"/>
+                  <!-- Box Interior Opening -->
+                  <rect x="125" y="225" width="130" height="140" fill="#4a3b32" rx="2"/>
+                  <!-- Side flap detail -->
+                  <path d="M 110 210 L 125 225 L 125 365 L 110 380 Z" fill="#b88653" opacity="0.8"/>
+                </g>
+
+                <!-- INTERNAL CAM MECHANISM -->
+                <g id="mechanism" class="animate-cam-push">
+                  <!-- Horizontal Crank Shaft -->
+                  <line x1="90" y1="320" x2="290" y2="320" stroke="#e6ccb2" stroke-width="6" stroke-linecap="round"/>
+                  <!-- Cams on Shaft -->
+                  <ellipse cx="160" cy="320" rx="18" ry="24" fill="#a37244" stroke="#7f5539" stroke-width="2"/>
+                  <ellipse cx="220" cy="320" rx="18" ry="24" fill="#a37244" stroke="#7f5539" stroke-width="2"/>
+                  
+                  <!-- Cam Follower Bar -->
+                  <rect x="135" y="270" width="110" height="12" fill="#ddb892" rx="2"/>
+                  <rect x="145" y="260" width="90" height="10" fill="#f8edeb" rx="1"/>
+                </g>
+
+                <!-- CRANK HANDLE (Gira) -->
+                <g id="crank-handle" class="animate-crank">
+                  <rect x="270" y="314" width="30" height="12" fill="#a37244" rx="2"/>
+                  <circle cx="295" cy="320" r="8" fill="#ddb892"/>
+                  <line x1="295" y1="320" x2="315" y2="320" stroke="#e6ccb2" stroke-width="5"/>
+                </g>
+
+                <!-- WOODEN STICKS EXTENDING UP -->
+                <g id="wooden-sticks">
+                  <!-- Left Stick (Left Wing) -->
+                  <line x1="145" y1="260" x2="145" y2="120" stroke="#e6ccb2" stroke-width="5" stroke-linecap="round"/>
+                  <!-- Center Stick (Body) -->
+                  <line x1="190" y1="260" x2="190" y2="110" stroke="#e6ccb2" stroke-width="6" stroke-linecap="round"/>
+                  <!-- Right Stick (Right Wing) -->
+                  <line x1="235" y1="260" x2="235" y2="120" stroke="#e6ccb2" stroke-width="5" stroke-linecap="round"/>
+                </g>
+
+                <!-- HUMMINGBIRD ARTICULATED FIGURE -->
+                <g id="hummingbird" transform="translate(190, 110)">
+                  <!-- Bird Body -->
+                  <path d="M -12 10 Q 0 -20 18 -10 Q 25 0 20 20 Q 0 25 -12 10 Z" fill="#f5f5f5" stroke="#cccccc" stroke-width="2"/>
+                  <!-- Beak -->
+                  <path d="M 18 -10 L 45 -5 L 18 -5 Z" fill="#ddb892"/>
+                  <!-- Tail Feathers -->
+                  <path d="M -12 10 L -35 25 L -20 5 Z" fill="#e0e0e0"/>
+
+                  <!-- LEFT WING -->
+                  <g class="animate-wing-left">
+                    <path d="M -5 -10 Q -40 -80 -85 -100 Q -50 -50 -5 -10 Z" fill="#eddcd2" stroke="#b88653" stroke-width="2"/>
+                  </g>
+
+                  <!-- RIGHT WING -->
+                  <g class="animate-wing-right">
+                    <path d="M 5 -10 Q 40 -80 85 -100 Q 50 -50 5 -10 Z" fill="#f8edeb" stroke="#b88653" stroke-width="2"/>
+                  </g>
+
+                  <!-- Head & Eye -->
+                  <circle cx="12" cy="-8" r="7" fill="#ffffff"/>
+                  <circle cx="14" cy="-9" r="2" fill="#333333"/>
+                </g>
+
+                <!-- Label Overlay -->
+                <rect x="10" y="10" width="140" height="26" fill="rgba(0,0,0,0.6)" rx="4"/>
+                <text x="20" y="27" fill="#4285f4" font-size="12" font-family="sans-serif" font-weight="bold">● Simulació Autòmat</text>
+              </svg>
+
+              <!-- Subtitle caption -->
+              <p class="text-xs text-center text-slate-400 mt-2 italic">
+                Model mecànic interactiu del Colibrí autòmat
+              </p>
+            </div>
+          </div>
+
+          <!-- Right Column: Catalan Text Description -->
+          <div class="lg:col-span-7 space-y-5">
+            <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg">
+              <h3 class="google-sans text-xl font-bold text-slate-800 mb-2">
+                Descripció del Projecte
+              </h3>
+              <p class="text-slate-700 text-base leading-relaxed">
+                Aquest és el meu projecte d'autòmat: <strong class="text-blue-900">Colibrí mecànic</strong>.
+              </p>
+            </div>
+
+            <p class="text-slate-600 text-base leading-relaxed">
+              La meva idea és representar el vol d'un colibrí utilitzant un mecanisme senzill de lemes i eix de manivela fet principalment amb <strong>cartró i palets de fusta</strong>.
+            </p>
+
+            <p class="text-slate-600 text-base leading-relaxed">
+              Quan es gira la palanca o maneta externa, les lemes internes empenyen els palets superiors fent que les ales del colibrí es moguin amunt i avall simulant el seu aleteig característic de manera continua i fluida.
+            </p>
+
+            <!-- Quick Specs Badges -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
+                <span class="block text-xs text-slate-500 font-medium">Mecanisme</span>
+                <span class="text-sm font-bold text-slate-800">Lemes i Cames</span>
+              </div>
+              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
+                <span class="block text-xs text-slate-500 font-medium">Moviment</span>
+                <span class="text-sm font-bold text-slate-800">Aleteig Vertical</span>
+              </div>
+              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center col-span-2 sm:col-span-1">
+                <span class="block text-xs text-slate-500 font-medium">Estructura</span>
+                <span class="text-sm font-bold text-slate-800">Cartró Reciclat</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Materials i Eines -->
+      <section class="bg-white rounded-xl shadow-sm border border-sites-border p-6 sm:p-8 hover:shadow-md transition">
+        <div class="border-b border-gray-100 pb-4 mb-6">
+          <h2 class="google-sans text-2xl font-bold text-sites-textPrimary flex items-center gap-3">
+            <i class="fa-solid fa-list-check text-green-600"></i>
+            <span>Materials i Eines Necessàries</span>
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">Llista de components utilitzats per a la fabricació de la maqueta</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Material Item 1 -->
+          <div class="flex items-start p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="p-3 bg-amber-100 text-amber-800 rounded-lg mr-4">
+              <i class="fa-solid fa-box text-lg"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">Cartró Gruixut i Prim</h4>
+              <p class="text-xs text-slate-500 mt-1">Per a la caixa base (suport) i les pales de les ales i el cos del colibrí.</p>
+            </div>
+          </div>
+
+          <!-- Material Item 2 -->
+          <div class="flex items-start p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="p-3 bg-amber-200 text-amber-900 rounded-lg mr-4">
+              <i class="fa-solid fa-[#7f5539] fa-cubes text-lg"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">Palets de Fusta</h4>
+              <p class="text-xs text-slate-500 mt-1">Palets de broqueta de diferents mides per a l'eix de manivela i guies superiors.</p>
+            </div>
+          </div>
+
+          <!-- Material Item 3 -->
+          <div class="flex items-start p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="p-3 bg-blue-100 text-blue-800 rounded-lg mr-4">
+              <i class="fa-solid fa-circle-dot text-lg"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">Taps de Plàstic / Rosques</h4>
+              <p class="text-xs text-slate-500 mt-1">Serveixen com a topalls i guies per a fixar el moviment de l'eix giratori.</p>
+            </div>
+          </div>
+
+          <!-- Material Item 4 -->
+          <div class="flex items-start p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="p-3 bg-red-100 text-red-800 rounded-lg mr-4">
+              <i class="fa-solid fa-scissors text-lg"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">Cúter, Tisores i Clau</h4>
+              <p class="text-xs text-slate-500 mt-1">Eines per a retallar el cartró i foradar la caixa amb precisió.</p>
+            </div>
+          </div>
+
+          <!-- Material Item 5 -->
+          <div class="flex items-start p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="p-3 bg-indigo-100 text-indigo-800 rounded-lg mr-4">
+              <i class="fa-solid fa-bottle-droplet text-lg"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">Cola Blanca o Silicona</h4>
+              <p class="text-xs text-slate-500 mt-1">Adhesiu fort per a unir les peces de cartró i fixar les lemes a l'eix.</p>
+            </div>
+          </div>
+
+          <!-- Material Item 6 -->
+          <div class="flex items-start p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="p-3 bg-emerald-100 text-emerald-800 rounded-lg mr-4">
+              <i class="fa-solid fa-file-lines text-lg"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">Plantilles del Colibrí</h4>
+              <p class="text-xs text-slate-500 mt-1">Esquemes impresos en paper per calcar les formes de les ales i el cos.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Video Tutorial Reference Card -->
+      <section class="bg-white rounded-xl shadow-sm border border-sites-border p-6 sm:p-8 hover:shadow-md transition">
+        <div class="border-b border-gray-100 pb-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="google-sans text-2xl font-bold text-sites-textPrimary flex items-center gap-3">
+              <i class="fa-brands fa-youtube text-red-600 text-2xl"></i>
+              <span>Enllaç al Vídeo Tutorial</span>
+            </h2>
+            <p class="text-sm text-slate-500 mt-1">Vídeo de referència utilitzat per a la construcció del projecte</p>
+          </div>
+          <a href="https://youtu.be/BnzAlCMw9PA?si=hRXYqevjjypba044" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition shadow-sm gap-2">
+            <span>Veure a YouTube</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+          </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-slate-900 text-white rounded-xl p-4 sm:p-6">
+          <div class="md:col-span-7 aspect-video rounded-lg overflow-hidden bg-black shadow-lg">
+            <iframe 
+              class="w-full h-full"
+              src="https://www.youtube.com/embed/BnzAlCMw9PA" 
+              title="Crea un colibrí autómata - Educación Imaginativa" 
+              frameborder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              allowfullscreen>
+            </iframe>
+          </div>
+          <div class="md:col-span-5 space-y-4">
+            <div class="inline-block px-2.5 py-1 bg-red-500/20 text-red-400 text-xs font-semibold rounded border border-red-500/30">
+              Tutorial Pas a Pas
+            </div>
+            <h3 class="google-sans text-xl font-bold text-white">
+              Crea un colibrí autómata
+            </h3>
+            <p class="text-slate-300 text-sm leading-relaxed">
+              Canal: <strong>Educación Imaginativa</strong>
+            </p>
+            <p class="text-slate-400 text-xs leading-relaxed">
+              Explicació detallada de com calcular la distància de les cames, perforar la caixa de cartró i assegurar el moviment lliure de les ales.
+            </p>
+            <div class="pt-2">
+              <button onclick="switchTab('video')" class="text-xs text-blue-400 hover:text-blue-300 font-medium underline flex items-center gap-1">
+                <span>Veure detalls i anotacions de la guia</span>
+                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ================= TAB 2: AUTÒMAT COLIBRÍ MECÀNIC ================= -->
+    <div id="tab-colibri" class="tab-content space-y-8">
+      <section class="bg-white rounded-xl shadow-sm border border-sites-border p-6 sm:p-8">
+        <h2 class="google-sans text-2xl font-bold text-sites-textPrimary mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-microscope text-blue-600"></i>
+          <span>Anàlisi Tècnica del Mecanisme</span>
+        </h2>
+        <p class="text-slate-600 mb-6">
+          El colibrí autòmat funciona transformant un moviment de rotació manual en un moviment d'elevació alternada per a les ales.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-5 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">1</span>
+              <span>L'Eix de Manivela (Rotació)</span>
+            </h3>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              En girar la maneta exterior, l'eix horizontal fet amb un palet de fusta rota 360 graus. Les dues lemes fixades a l'eix tenen una forma descentrada.
+            </p>
+          </div>
+
+          <div class="p-5 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">2</span>
+              <span>Transformació del Moviment</span>
+            </h3>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              Les lemes empenyen una barra horitzontal (el seguidor) cap amunt en el punt més alt del seu gir, i la deixen caure per gravetat en el punt més baix.
+            </p>
+          </div>
+
+          <div class="p-5 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+            <div class="h-full flex flex-col justify-between">
+              <div>
+                <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2 mb-2">
+                  <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">3</span>
+                  <span>Transmissió a les Ales</span>
+                </h3>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                  Els dos palets verticals exteriors estan connectats directament a la part inferior de les ales de cartró, fent que s'obrin i se tancuin.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-5 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">4</span>
+              <span>Fase Talladora Làser</span>
+            </h3>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              En l'última part del projecte, es refaran les mesures per a tallar la caixa final en fusta MDF de 3mm utilitzant la talladora làser del taller.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= TAB 3: VÍDEO TUTORIAL ================= -->
+    <div id="tab-video" class="tab-content space-y-8">
+      <section class="bg-white rounded-xl shadow-sm border border-sites-border p-6 sm:p-8">
+        <h2 class="google-sans text-2xl font-bold text-sites-textPrimary mb-4">
+          Guia Pas a Pas del Vídeo
+        </h2>
+        <div class="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-md mb-6">
+          <iframe 
+            class="w-full h-full"
+            src="https://www.youtube.com/embed/BnzAlCMw9PA" 
+            title="Crea un colibrí autómata" 
+            frameborder="0" 
+            allowfullscreen>
+          </iframe>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 text-sm text-slate-700 space-y-2">
+          <p><strong>Enllaç directe:</strong> <a href="https://youtu.be/BnzAlCMw9PA?si=hRXYqevjjypba044" target="_blank" class="text-blue-600 hover:underline">https://youtu.be/BnzAlCMw9PA</a></p>
+          <p><strong>Anotacions:</strong> Cal revisar bé la mida de la caixa per ajustar la distància de les llistons abans del tallat en làser.</p>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <footer class="bg-sites-header text-gray-400 py-8 border-t border-gray-800 mt-12 text-sm">
+    <div class="max-w-6xl mx-auto px-4 text-center space-y-3">
+      <p class="font-medium text-gray-300">
+        TECNOLOGIA 3R - PROJECTE AUTÒMAT
+      </p>
+      <p class="text-xs text-gray-500">
+        Creat per <strong>Saber Bordanova</strong> | Projecte d'Educació Secundària
+      </p>
+      <div class="pt-2 text-xs text-gray-600">
+        Disseny d'estil inspirat en Google Sites
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function switchTab(tabId) {
+      // Hide all tabs
+      const tabs = document.querySelectorAll('.tab-content');
+      tabs.forEach(tab => tab.classList.remove('active'));
+
+      // Remove active styles from nav buttons
+      const navBtns = document.querySelectorAll('.nav-btn');
+      navBtns.forEach(btn => {
+        btn.classList.remove('text-white', 'bg-white/10');
+        btn.classList.add('text-gray-300');
+      });
+
+      // Show selected tab
+      const selectedTab = document.getElementById('tab-' + tabId);
+      if (selectedTab) {
+        selectedTab.classList.add('active');
+      }
+
+      // Highlight corresponding navbar button
+      const activeNav = document.getElementById('nav-' + tabId);
+      if (activeNav) {
+        activeNav.classList.remove('text-gray-300');
+        activeNav.classList.add('text-white', 'bg-white/10');
+      }
+
+      // Scroll smoothly to top of main
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
+    }
+  </script>
+</body>
+</html>
